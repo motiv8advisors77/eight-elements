@@ -1,0 +1,31 @@
+GitHub
+------
+1. On github.com: New repository (e.g. eight-elements), empty, no README.
+2. In this folder: git remote set-url origin https://github.com/YOUR_USER/YOUR_REPO.git
+3. git push -u origin main
+
+Supabase (schema)
+-----------------
+1. New project in Supabase dashboard.
+2. SQL Editor: paste and run supabase/migrations/20260214120000_client_plans.sql (skip if table already exists).
+
+Supabase (auth URLs)
+--------------------
+Authentication > URL configuration:
+- Site URL: your production URL after Vercel deploy (e.g. https://your-app.vercel.app)
+- Redirect URLs: http://localhost:3000/auth/callback AND https://your-app.vercel.app/auth/callback
+
+Vercel
+------
+1. Import the GitHub repo; framework Next.js; root = repo root.
+2. Environment variables (Production + Preview if needed):
+   NEXT_PUBLIC_SUPABASE_URL
+   NEXT_PUBLIC_SUPABASE_ANON_KEY
+   (values from Supabase Project Settings > API)
+3. Deploy, then update Supabase Site URL and redirect list with the real URL.
+
+Local
+-----
+1. cp .env.example .env.local  (Windows: copy .env.example .env.local)
+2. Fill NEXT_PUBLIC_* from Supabase.
+3. pnpm install && pnpm dev
