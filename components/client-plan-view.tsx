@@ -13,7 +13,7 @@ import {
   LegacyPlanningChart,
 } from "@/components/financial-charts"
 import { Recommendations } from "@/components/recommendations"
-import type { ClientPlan } from "@/lib/types"
+import type { ClientPlan, StatusItem } from "@/lib/types"
 
 interface ClientPlanViewProps {
   client: ClientPlan
@@ -28,6 +28,21 @@ function formatCurrency(value: number): string {
 
 function formatPercent(value: number): string {
   return `${(value * 100).toFixed(1)}%`
+}
+
+function formatOptionalPlanDate(iso: string): string {
+  const s = iso.trim()
+  if (!s) return '—'
+  const parts = s.split('-').map(Number)
+  if (parts.length !== 3 || parts.some(n => Number.isNaN(n))) return s
+  const [y, mo, d] = parts
+  return new Date(y, mo - 1, d).toLocaleDateString()
+}
+
+function formatEstateDocumentRow(item: StatusItem): string {
+  const date = item.completedOn.trim()
+  if (!date) return item.status
+  return `${item.status} · ${formatOptionalPlanDate(date)}`
 }
 
 function MetricCard({ label, value, color }: { label: string; value: number; color: string }) {
@@ -193,6 +208,13 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
                 <SectionCard title="Dynasty Creator" color="#ca8a04">
                   <DataRow label="Estate Value" value={client.dynastyCreator.estateValue} />
                   <DataRow label="Funeral Trust" value={client.dynastyCreator.funeralTrust} />
+                  {client.dynastyCreator.statusItems.map(item => (
+                    <DataRow
+                      key={item.id}
+                      label={item.name || 'Estate document'}
+                      value={formatEstateDocumentRow(item)}
+                    />
+                  ))}
                   <DataRow label="Tax Liability" value={client.dynastyCreator.totalTaxLiability} isCalculated />
                 </SectionCard>
               </div>
@@ -347,7 +369,11 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
                   />
                 ))}
                 {client.dynastyCreator.statusItems.map(item => (
-                  <DataRow key={item.id} label={item.name || 'Status'} value={item.status} />
+                  <DataRow
+                    key={item.id}
+                    label={item.name || 'Estate document'}
+                    value={formatEstateDocumentRow(item)}
+                  />
                 ))}
                 <DataRow label="Funeral Trust" value={client.dynastyCreator.funeralTrust} />
                 <DataRow label="Total Tax Liability" value={client.dynastyCreator.totalTaxLiability} isCalculated />

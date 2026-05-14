@@ -31,6 +31,8 @@ export interface StatusItem {
   id: string
   name: string
   status: 'FINISHED' | 'NOT FINISHED' | 'IN PROGRESS'
+  /** ISO `YYYY-MM-DD` when this document was completed; empty if unknown. */
+  completedOn: string
 }
 
 // Section data types - all using dynamic line items
@@ -326,6 +328,44 @@ export function calculateDynastyCreator(data: DynastyCreatorData): DynastyCreato
   }
 }
 
+// Helper to generate unique IDs
+export function generateId(): string {
+  return Math.random().toString(36).substring(2, 9)
+}
+
+function normalizeStoredStatusItem(raw: unknown): StatusItem {
+  const item = typeof raw === 'object' && raw !== null ? (raw as Record<string, unknown>) : {}
+  const status =
+    item.status === 'FINISHED' || item.status === 'NOT FINISHED' || item.status === 'IN PROGRESS'
+      ? item.status
+      : 'NOT FINISHED'
+  return {
+    id: typeof item.id === 'string' ? item.id : generateId(),
+    name: typeof item.name === 'string' ? item.name : '',
+    status,
+    completedOn: typeof item.completedOn === 'string' ? item.completedOn : '',
+  }
+}
+
+/** Merge DB jsonb with defaults so older rows get `completedOn` on each document and recalculated fields. */
+export function parseStoredDynastyCreator(raw: unknown): DynastyCreatorData {
+  const partial =
+    typeof raw === 'object' && raw !== null ? (raw as Partial<DynastyCreatorData> & { estateDocumentCompletedOn?: unknown }) : {}
+  const { estateDocumentCompletedOn: _removed, ...rest } = partial
+  void _removed
+  const statusItems = Array.isArray(rest.statusItems)
+    ? rest.statusItems.map(normalizeStoredStatusItem)
+    : defaultDynastyCreator.statusItems
+  return calculateDynastyCreator({
+    ...defaultDynastyCreator,
+    ...rest,
+    beneficiaries: Array.isArray(rest.beneficiaries)
+      ? rest.beneficiaries
+      : defaultDynastyCreator.beneficiaries,
+    statusItems,
+  })
+}
+
 export function calculateTaxPlanner(
   data: TaxPlannerData,
   dynastyCreator: DynastyCreatorData
@@ -334,9 +374,4 @@ export function calculateTaxPlanner(
     ...data,
     taxUponDeath: dynastyCreator.totalTaxLiability,
   }
-}
-
-// Helper to generate unique IDs
-export function generateId(): string {
-  return Math.random().toString(36).substring(2, 9)
 }

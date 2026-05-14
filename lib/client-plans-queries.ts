@@ -1,5 +1,10 @@
 import type { SupabaseClient } from "@supabase/supabase-js"
-import { type ClientPlan, parseStoredAssetBuilder, parseStoredIncomeOptimization } from "@/lib/types"
+import {
+  type ClientPlan,
+  parseStoredAssetBuilder,
+  parseStoredDynastyCreator,
+  parseStoredIncomeOptimization,
+} from "@/lib/types"
 
 type ClientPlanRow = {
   id: string
@@ -30,7 +35,7 @@ function rowToClientPlan(row: ClientPlanRow): ClientPlan {
     assetBuilder: parseStoredAssetBuilder(row.asset_builder),
     legacyEnhancer: row.legacy_enhancer,
     legacyDefender: row.legacy_defender,
-    dynastyCreator: row.dynasty_creator,
+    dynastyCreator: parseStoredDynastyCreator(row.dynasty_creator),
     taxPlanner: row.tax_planner,
   }
 }

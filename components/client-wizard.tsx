@@ -894,7 +894,7 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Estate Documents</label>
               <div className="space-y-2">
                 {dynastyCreator.statusItems.map(item => (
-                  <div key={item.id} className="flex items-center gap-2 py-2 group">
+                  <div key={item.id} className="flex flex-wrap items-center gap-2 py-2 group">
                     <Input
                       placeholder="Document"
                       value={item.name}
@@ -902,23 +902,36 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
                         ...prev,
                         statusItems: prev.statusItems.map(i => i.id === item.id ? { ...i, name: e.target.value } : i)
                       }))}
-                      className="flex-1 h-9 bg-secondary/30 border-border/50 text-sm"
+                      className="flex-1 min-w-[140px] h-9 bg-secondary/30 border-border/50 text-sm"
                     />
                     <Select 
                       value={item.status} 
-                      onValueChange={(v: 'FINISHED' | 'NOT FINISHED') => setDynastyCreator(prev => ({
+                      onValueChange={(v: StatusItem['status']) => setDynastyCreator(prev => ({
                         ...prev,
                         statusItems: prev.statusItems.map(i => i.id === item.id ? { ...i, status: v } : i)
                       }))}
                     >
-                      <SelectTrigger className="w-32 h-9 bg-secondary/30 border-border/50 text-sm">
+                      <SelectTrigger className="w-[9.5rem] h-9 bg-secondary/30 border-border/50 text-sm shrink-0">
                         <SelectValue />
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="FINISHED">Finished</SelectItem>
                         <SelectItem value="NOT FINISHED">Not Finished</SelectItem>
+                        <SelectItem value="IN PROGRESS">In Progress</SelectItem>
                       </SelectContent>
                     </Select>
+                    <Input
+                      type="date"
+                      value={item.completedOn}
+                      onChange={(e) => setDynastyCreator(prev => ({
+                        ...prev,
+                        statusItems: prev.statusItems.map(i =>
+                          i.id === item.id ? { ...i, completedOn: e.target.value } : i
+                        ),
+                      }))}
+                      className="h-9 w-[9.5rem] shrink-0 bg-secondary/30 border-border/50 text-sm"
+                      title="Date completed"
+                    />
                     <button 
                       type="button" 
                       onClick={() => setDynastyCreator(prev => ({
@@ -935,7 +948,12 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
                   type="button"
                   onClick={() => setDynastyCreator(prev => ({
                     ...prev,
-                    statusItems: [...prev.statusItems, { id: generateId(), name: '', status: 'NOT FINISHED' as const }]
+                    statusItems: [...prev.statusItems, {
+                      id: generateId(),
+                      name: '',
+                      status: 'NOT FINISHED' as const,
+                      completedOn: '',
+                    }]
                   }))}
                   className="w-full py-2 text-sm text-muted-foreground hover:text-foreground border border-dashed border-border/50 rounded-md hover:border-foreground/30 transition-colors flex items-center justify-center gap-1"
                 >
