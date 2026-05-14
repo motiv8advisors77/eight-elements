@@ -17,12 +17,13 @@ Authentication > URL configuration:
 
 Vercel
 ------
-1. Import the GitHub repo; framework Next.js; root = repo root.
-2. Environment variables (Production + Preview if needed):
-   NEXT_PUBLIC_SUPABASE_URL
-   NEXT_PUBLIC_SUPABASE_ANON_KEY
-   (values from Supabase Project Settings > API)
-3. Deploy, then update Supabase Site URL and redirect list with the real URL.
+1. vercel.com → Log in → Add New… → Project → Import Git Repository → pick Motiv8Advisors/eight-elements (or your org/repo).
+2. Framework Preset: Next.js (auto). Root Directory: ./ (repo root). Build: npm run build or pnpm build (Vercel picks pnpm if pnpm-lock.yaml exists).
+3. Environment Variables — add for Production (and Preview if you want preview deploys to hit Supabase):
+   NEXT_PUBLIC_SUPABASE_URL = https://YOUR_REF.supabase.co   (project URL only; NO /rest/v1/)
+   NEXT_PUBLIC_SUPABASE_ANON_KEY = (anon public key from Supabase → Project Settings → API)
+4. Deploy. Copy the production URL (e.g. https://eight-elements-xxx.vercel.app).
+5. In Supabase → Authentication → URL configuration: set Site URL to that production URL; add https://YOUR_VERCEL_HOST/auth/callback to Redirect URLs (keep localhost too for dev).
 
 Local
 -----
