@@ -1,5 +1,20 @@
 import type { ClientPlan } from "./types"
 
+function householdConservativeRisk(client: ClientPlan): number {
+  const ab = client.assetBuilder
+  const primary = ab.riskTolerance
+  if (!client.spouseName?.trim()) return primary
+  return Math.min(primary, ab.spouseRiskTolerance)
+}
+
+function riskToleranceNarrative(client: ClientPlan): string {
+  const ab = client.assetBuilder
+  if (!client.spouseName?.trim()) {
+    return `${ab.riskTolerance}/10`
+  }
+  return `${ab.riskTolerance}/10 (primary) and ${ab.spouseRiskTolerance}/10 (spouse); using ${householdConservativeRisk(client)}/10 as the more conservative for planning`
+}
+
 export type RecommendationPriority = "high" | "medium" | "low"
 export type RecommendationCategory = 
   | "annuity" 
@@ -53,14 +68,16 @@ export function generateRecommendations(client: ClientPlan): Recommendation[] {
     })
   }
 
+  const conservativeRisk = householdConservativeRisk(client)
+
   // Fixed indexed annuity for growth potential (separate from income need)
-  if (assetBuilder.qualifiedAssets > 100000 && assetBuilder.riskTolerance <= 5 && incomeOptimization.annualGap >= 0) {
+  if (assetBuilder.qualifiedAssets > 100000 && conservativeRisk <= 5 && incomeOptimization.annualGap >= 0) {
     recommendations.push({
       id: "annuity-fia-growth",
       category: "annuity",
       priority: "medium",
       title: "Fixed Indexed Annuity for Safe Growth",
-      description: `With $${assetBuilder.qualifiedAssets.toLocaleString()} in qualified assets and a conservative risk tolerance (${assetBuilder.riskTolerance}/10), a Fixed Indexed Annuity can provide market-linked growth with principal protection.`,
+      description: `With $${assetBuilder.qualifiedAssets.toLocaleString()} in qualified assets and risk tolerance ${riskToleranceNarrative(client)}, a Fixed Indexed Annuity can provide market-linked growth with principal protection.`,
       action: `Allocate a portion of qualified assets to a FIA. Consider adding an income rider for future guaranteed income flexibility.`,
       impact: "Tax-deferred growth with downside protection and optional future income guarantees",
       estimatedValue: Math.round(assetBuilder.qualifiedAssets * 0.3),
@@ -176,13 +193,13 @@ export function generateRecommendations(client: ClientPlan): Recommendation[] {
   }
 
   // Risk tolerance mismatch
-  if (assetBuilder.riskTolerance <= 3 && assetBuilder.maxLossDollars > assetBuilder.totalAssets * 0.1) {
+  if (householdConservativeRisk(client) <= 3 && assetBuilder.maxLossDollars > assetBuilder.totalAssets * 0.1) {
     recommendations.push({
       id: "investment-risk-review",
       category: "investment",
       priority: "high",
       title: "Risk Tolerance Review Needed",
-      description: `Client's maximum acceptable loss ($${assetBuilder.maxLossDollars.toLocaleString()}) exceeds 10% of total assets with a low risk tolerance. Portfolio may need adjustment.`,
+      description: `Maximum acceptable loss ($${assetBuilder.maxLossDollars.toLocaleString()}) exceeds 10% of total assets while at least one household risk score is low (${riskToleranceNarrative(client)}). The portfolio may need adjustment.`,
       action: `Review current investment allocation and consider more conservative options or principal-protected products.`,
       impact: "Better alignment between risk tolerance and portfolio volatility",
     })

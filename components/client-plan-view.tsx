@@ -1,5 +1,6 @@
 "use client"
 
+import { APP_TITLE } from "@/lib/app-title"
 import { Button } from "@/components/ui/button"
 import { ElementsWheel } from "@/components/elements-wheel"
 import { Download, ArrowLeft, Calculator } from "lucide-react"
@@ -95,6 +96,11 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
             <div className="h-4 w-px bg-border" />
             <div>
               <h1 className="text-sm font-medium">{client.clientName}</h1>
+              {client.spouseName?.trim() ? (
+                <p className="text-xs text-muted-foreground">
+                  {`& ${client.spouseName.trim()}`}
+                </p>
+              ) : null}
               <p className="text-xs text-muted-foreground">
                 Updated {new Date(client.updatedAt).toLocaleDateString()}
               </p>
@@ -136,7 +142,7 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
             <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
               {/* Left - Wheel */}
               <div className="flex flex-col items-center justify-center p-6 bg-card border border-border/50 rounded-lg">
-                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">Eight Elements</h3>
+                <h3 className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-4">{APP_TITLE}</h3>
                 <ElementsWheel />
               </div>
 
@@ -144,13 +150,35 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
               <div className="lg:col-span-2 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <SectionCard title="Income Optimization" color="#16a34a">
                   <DataRow label="Income Needed" value={client.incomeOptimization.incomeNeeded} />
+                  {(client.incomeOptimization.spouseMonthlyIncome ?? 0) > 0 ? (
+                    <DataRow
+                      label={
+                        client.spouseName?.trim()
+                          ? `${client.spouseName.trim()} (monthly)`
+                          : "Spouse / partner income (mo.)"
+                      }
+                      value={client.incomeOptimization.spouseMonthlyIncome ?? 0}
+                    />
+                  ) : null}
                   <DataRow label="Total Income" value={client.incomeOptimization.totalIncome} isCalculated />
                   <DataRow label="Monthly Gap" value={client.incomeOptimization.monthlyGap} isCalculated />
                   <DataRow label="Annuity Needed" value={client.incomeOptimization.annuityNeeded} isCalculated />
                 </SectionCard>
 
                 <SectionCard title="Asset Builder" color="#991b1b">
-                  <DataRow label="Risk Tolerance" value={`${client.assetBuilder.riskTolerance}/10`} />
+                  {client.spouseName?.trim() ? (
+                    <>
+                      <DataRow label={`${client.clientName.trim() || "Client"} — risk (1–10)`} value={`${client.assetBuilder.riskTolerance}/10`} />
+                      <DataRow label={`${client.spouseName.trim()} — risk (1–10)`} value={`${client.assetBuilder.spouseRiskTolerance}/10`} />
+                      <DataRow
+                        label="Household (more conservative)"
+                        value={`${Math.min(client.assetBuilder.riskTolerance, client.assetBuilder.spouseRiskTolerance)}/10`}
+                        isCalculated
+                      />
+                    </>
+                  ) : (
+                    <DataRow label="Risk Tolerance" value={`${client.assetBuilder.riskTolerance}/10`} />
+                  )}
                   <DataRow label="Qualified" value={client.assetBuilder.qualifiedAssets} isCalculated />
                   <DataRow label="Non-Qualified" value={client.assetBuilder.nonQualifiedAssets} isCalculated />
                   <DataRow label="Total Assets" value={client.assetBuilder.totalAssets} isCalculated />
@@ -213,6 +241,16 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
                 {client.incomeOptimization.incomeSources.map(item => (
                   <DataRow key={item.id} label={item.name || 'Income Source'} value={item.amount} />
                 ))}
+                {(client.incomeOptimization.spouseMonthlyIncome ?? 0) > 0 ? (
+                  <DataRow
+                    label={
+                      client.spouseName?.trim()
+                        ? `${client.spouseName.trim()} (monthly)`
+                        : "Spouse / partner income (monthly)"
+                    }
+                    value={client.incomeOptimization.spouseMonthlyIncome ?? 0}
+                  />
+                ) : null}
                 <DataRow label="Annuity Payout %" value={formatPercent(client.incomeOptimization.annuityPayoutPercent)} />
                 <DataRow label="Total Income" value={client.incomeOptimization.totalIncome} isCalculated />
                 <DataRow label="Monthly Gap" value={client.incomeOptimization.monthlyGap} isCalculated />
@@ -230,7 +268,19 @@ export function ClientPlanView({ client, onBack }: ClientPlanViewProps) {
 
               {/* Asset Builder */}
               <SectionCard title="Asset Builder" color="#991b1b">
-                <DataRow label="Risk Tolerance" value={`${client.assetBuilder.riskTolerance}/10`} />
+                {client.spouseName?.trim() ? (
+                  <>
+                    <DataRow label={`${client.clientName.trim() || "Client"} — risk (1–10)`} value={`${client.assetBuilder.riskTolerance}/10`} />
+                    <DataRow label={`${client.spouseName.trim()} — risk (1–10)`} value={`${client.assetBuilder.spouseRiskTolerance}/10`} />
+                    <DataRow
+                      label="Household (more conservative)"
+                      value={`${Math.min(client.assetBuilder.riskTolerance, client.assetBuilder.spouseRiskTolerance)}/10`}
+                      isCalculated
+                    />
+                  </>
+                ) : (
+                  <DataRow label="Risk Tolerance" value={`${client.assetBuilder.riskTolerance}/10`} />
+                )}
                 {client.assetBuilder.assets.map(item => (
                   <DataRow 
                     key={item.id} 

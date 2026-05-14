@@ -89,12 +89,28 @@ export function AssetAllocationChart({ client }: FinancialChartsProps) {
 
 export function IncomeBreakdownChart({ client }: FinancialChartsProps) {
   const colors = [COLORS.accent, COLORS.primary, COLORS.blue, COLORS.purple, COLORS.orange]
-  
-  const data = client.incomeOptimization.incomeSources.map((source, index) => ({
+  const spouseIncome = client.incomeOptimization.spouseMonthlyIncome ?? 0
+  const spouseLabel = client.spouseName?.trim()
+    ? `${client.spouseName.trim()} (income)`
+    : "Spouse / partner income"
+
+  const fromSources = client.incomeOptimization.incomeSources.map((source, index) => ({
     name: source.name || `Source ${index + 1}`,
     amount: source.amount,
     fill: colors[index % colors.length],
   }))
+
+  const data =
+    spouseIncome > 0
+      ? [
+          ...fromSources,
+          {
+            name: spouseLabel,
+            amount: spouseIncome,
+            fill: COLORS.purple,
+          },
+        ]
+      : fromSources
 
   if (data.length === 0) return <EmptyState message="No income sources" />
 

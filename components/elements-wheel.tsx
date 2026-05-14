@@ -1,5 +1,6 @@
 "use client"
 
+import { APP_TITLE } from "@/lib/app-title"
 import { useState } from "react"
 import Image from "next/image"
 
@@ -29,7 +30,7 @@ export function ElementsWheel({ onElementClick, activeElement }: ElementsWheelPr
       <div className="relative w-[300px] h-[380px]">
         <Image
           src="/images/8-elements-logo.png"
-          alt="Eight Elements of Financial Control"
+          alt={APP_TITLE}
           fill
           className="object-contain"
           priority
@@ -39,7 +40,7 @@ export function ElementsWheel({ onElementClick, activeElement }: ElementsWheelPr
       {/* Legend */}
       <div className="mt-6">
         <h3 className="text-center text-sm font-medium text-foreground mb-4 tracking-wide">
-          Eight Elements of Financial Control
+          {APP_TITLE}
         </h3>
         <div className="grid grid-cols-2 gap-x-12 gap-y-2.5">
           {elements.map((el) => (

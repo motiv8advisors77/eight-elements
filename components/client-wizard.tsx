@@ -68,9 +68,9 @@ type WizardStep = {
 }
 
 const wizardSteps: WizardStep[] = [
-  { id: 'clientInfo', title: 'Client Information', subtitle: 'Enter the client name', color: '#1a1a1a' },
+  { id: 'clientInfo', title: 'Client Information', subtitle: 'Client, spouse or partner, and household name', color: '#1a1a1a' },
   { id: 'incomeOptimization', title: 'Income Optimization', subtitle: 'Document income sources', color: '#16a34a' },
-  { id: 'assetBuilder', title: 'Asset Builder', subtitle: 'Add all client assets', color: '#991b1b' },
+  { id: 'assetBuilder', title: 'Asset Builder', subtitle: 'Assets, risk tolerance, and allocation', color: '#991b1b' },
   { id: 'emergencyBuilder', title: 'Emergency Builder', subtitle: 'Plan for liquidity', color: '#2563eb' },
   { id: 'revenueReplacer', title: 'Revenue Replacer', subtitle: 'Calculate life insurance needs', color: '#7c3aed' },
   { id: 'legacyEnhancer', title: 'Legacy Enhancer', subtitle: 'Plan for giving', color: '#0d9488' },
@@ -230,6 +230,7 @@ function LineItemRow({ item, onUpdate, onRemove, showCategory = false, categorie
 export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
   const [currentStep, setCurrentStep] = useState(0)
   const [clientName, setClientName] = useState("")
+  const [spouseName, setSpouseName] = useState("")
   
   const [incomeOpt, setIncomeOpt] = useState<IncomeOptimizationData>({ ...defaultIncomeOptimization })
   const [assetBuilder, setAssetBuilder] = useState<AssetBuilderData>({ ...defaultAssetBuilder })
@@ -250,7 +251,7 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
 
   useEffect(() => {
     setIncomeOpt(prev => calculateIncomeOptimization(prev))
-  }, [incomeOpt.incomeNeeded, incomeSourcesKey, incomeOpt.annuityPayoutPercent])
+  }, [incomeOpt.incomeNeeded, incomeSourcesKey, incomeOpt.annuityPayoutPercent, incomeOpt.spouseMonthlyIncome])
 
   useEffect(() => {
     setAssetBuilder(prev => calculateAssetBuilder(prev))
@@ -289,6 +290,7 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
       const newClient: ClientPlan = {
         id: Date.now().toString(),
         clientName: clientName.trim(),
+        spouseName: spouseName.trim(),
         createdAt: new Date().toISOString(),
         updatedAt: new Date().toISOString(),
         incomeOptimization: incomeOpt,
@@ -351,7 +353,7 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
         return (
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Enter the client or household name for this financial plan.
+              Enter the client or household name for this financial plan. Add a spouse or partner if applicable.
             </p>
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Client Name</label>
@@ -363,6 +365,15 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
                 autoFocus
               />
             </div>
+            <div>
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Spouse / partner</label>
+              <Input
+                placeholder="Optional — e.g., Jane Smith"
+                value={spouseName}
+                onChange={(e) => setSpouseName(e.target.value)}
+                className="h-12 text-lg bg-secondary/30 border-border/50"
+              />
+            </div>
           </div>
         )
 
@@ -370,7 +381,7 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
         return (
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Enter monthly income needed and all income sources. The system calculates the gap and annuity needed.
+              Enter monthly income needed and all household income. Add the client&apos;s sources below; add spouse or partner income separately if you entered a spouse on the previous step.
             </p>
             <div className="grid grid-cols-2 gap-4">
               <div>
@@ -417,6 +428,22 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
                 </button>
               </div>
             </div>
+            <div className="rounded-lg border border-border/50 bg-secondary/20 p-4 space-y-2">
+              <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide block">
+                {spouseName.trim()
+                  ? `${spouseName.trim()} — monthly income`
+                  : "Spouse / partner income (monthly)"}
+              </label>
+              <p className="text-[11px] text-muted-foreground leading-snug">
+                Optional. Counts toward total household income in addition to the line items above. You can also add spouse pay as a line item instead—do not enter both for the same income.
+              </p>
+              <CurrencyInput
+                value={incomeOpt.spouseMonthlyIncome}
+                onChange={(v) =>
+                  setIncomeOpt((prev) => ({ ...prev, spouseMonthlyIncome: v }))
+                }
+              />
+            </div>
             <div className="space-y-2 pt-4 border-t border-border/50">
               <CalculatedField label="Total Income" value={incomeOpt.totalIncome} />
               <CalculatedField label="Monthly Gap" value={incomeOpt.monthlyGap} />
@@ -430,24 +457,74 @@ export function ClientWizard({ onComplete, onCancel }: ClientWizardProps) {
         return (
           <div className="space-y-6">
             <p className="text-sm text-muted-foreground">
-              Add all client assets. Mark each as Qualified (IRA, 401k) or Non-Qualified (taxable).
+              {spouseName.trim()
+                ? "Add all household assets. Capture each person’s risk tolerance (1–10) when both spouses participate in investment decisions."
+                : "Add all client assets. Mark each as Qualified (IRA, 401k) or Non-Qualified (taxable)."}
             </p>
-            <div className="grid grid-cols-2 gap-4">
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Risk Tolerance (1-10)</label>
-                <NumberInput
-                  value={assetBuilder.riskTolerance}
-                  onChange={(v) => setAssetBuilder(prev => ({ ...prev, riskTolerance: Math.min(10, Math.max(1, v)) }))}
-                />
+            {spouseName.trim() ? (
+              <>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
+                      {clientName.trim() ? `${clientName.trim()} — risk tolerance (1–10)` : "Client — risk tolerance (1–10)"}
+                    </label>
+                    <NumberInput
+                      value={assetBuilder.riskTolerance}
+                      onChange={(v) =>
+                        setAssetBuilder((prev) => ({
+                          ...prev,
+                          riskTolerance: Math.min(10, Math.max(1, v)),
+                        }))
+                      }
+                    />
+                  </div>
+                  <div>
+                    <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">
+                      {`${spouseName.trim()} — risk tolerance (1–10)`}
+                    </label>
+                    <NumberInput
+                      value={assetBuilder.spouseRiskTolerance}
+                      onChange={(v) =>
+                        setAssetBuilder((prev) => ({
+                          ...prev,
+                          spouseRiskTolerance: Math.min(10, Math.max(1, v)),
+                        }))
+                      }
+                    />
+                  </div>
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Max Loss $</label>
+                  <p className="text-[11px] text-muted-foreground mb-2">Household maximum acceptable portfolio loss (one figure).</p>
+                  <CurrencyInput
+                    value={assetBuilder.maxLossDollars}
+                    onChange={(v) => setAssetBuilder((prev) => ({ ...prev, maxLossDollars: v }))}
+                  />
+                </div>
+              </>
+            ) : (
+              <div className="grid grid-cols-2 gap-4">
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Risk Tolerance (1-10)</label>
+                  <NumberInput
+                    value={assetBuilder.riskTolerance}
+                    onChange={(v) =>
+                      setAssetBuilder((prev) => ({
+                        ...prev,
+                        riskTolerance: Math.min(10, Math.max(1, v)),
+                      }))
+                    }
+                  />
+                </div>
+                <div>
+                  <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Max Loss $</label>
+                  <CurrencyInput
+                    value={assetBuilder.maxLossDollars}
+                    onChange={(v) => setAssetBuilder((prev) => ({ ...prev, maxLossDollars: v }))}
+                  />
+                </div>
               </div>
-              <div>
-                <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Max Loss $</label>
-                <CurrencyInput
-                  value={assetBuilder.maxLossDollars}
-                  onChange={(v) => setAssetBuilder(prev => ({ ...prev, maxLossDollars: v }))}
-                />
-              </div>
-            </div>
+            )}
             <div>
               <label className="text-xs font-medium text-muted-foreground uppercase tracking-wide mb-2 block">Assets</label>
               <div className="space-y-1">

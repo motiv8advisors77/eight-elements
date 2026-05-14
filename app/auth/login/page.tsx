@@ -1,6 +1,8 @@
 'use client'
 
+import { APP_TITLE_HEADLINE } from '@/lib/app-title'
 import { createClient } from '@/lib/supabase/client'
+import { getAuthErrorMessage } from '@/lib/supabase/auth-error-message'
 import { Button } from '@/components/ui/button'
 import {
   Card,
@@ -32,16 +34,11 @@ export default function Page() {
       const { error } = await supabase.auth.signInWithPassword({
         email,
         password,
-        options: {
-          emailRedirectTo:
-            process.env.NEXT_PUBLIC_DEV_SUPABASE_REDIRECT_URL ??
-            `${window.location.origin}/auth/callback`,
-        },
       })
       if (error) throw error
       router.push('/')
     } catch (error: unknown) {
-      setError(error instanceof Error ? error.message : 'An error occurred')
+      setError(getAuthErrorMessage(error))
     } finally {
       setIsLoading(false)
     }
@@ -54,8 +51,8 @@ export default function Page() {
           <div className="text-center mb-4">
             <p className="text-xs uppercase tracking-widest text-muted-foreground mb-2">Welcome Back</p>
             <h1 className="text-2xl font-light text-foreground">
-              Eight Elements of
-              <span className="block font-medium">Financial Control</span>
+              {APP_TITLE_HEADLINE.lead}
+              <span className="block font-medium">{APP_TITLE_HEADLINE.accent}</span>
             </h1>
           </div>
           <Card className="border-border">

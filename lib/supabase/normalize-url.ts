@@ -5,8 +5,16 @@
  */
 export function normalizeSupabaseUrl(url: string | undefined): string {
   if (!url) return ''
-  return url
+  const base = url
     .trim()
     .replace(/\/+$/, '')
     .replace(/\/rest\/v1\/?$/i, '')
+  if (!base) return ''
+  try {
+    const parsed = new URL(base)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
+    return base
+  } catch {
+    return ''
+  }
 }

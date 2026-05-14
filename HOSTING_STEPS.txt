@@ -1,7 +1,7 @@
 GitHub
 ------
 1. On github.com: New repository (e.g. eight-elements), empty, no README.
-2. In this folder: git remote set-url origin https://github.com/YOUR_USER/YOUR_REPO.git
+2. In this folder: git remote set-url origin https://github.com/motiv8advisors77/eight-elements.git
 3. git push -u origin main
 
 Supabase (schema)
@@ -17,7 +17,7 @@ Authentication > URL configuration:
 
 Vercel
 ------
-1. vercel.com → Log in → Add New… → Project → Import Git Repository → pick Motiv8Advisors/eight-elements (or your org/repo).
+1. vercel.com → Log in → Add New… → Project → Import Git Repository → pick motiv8advisors77/eight-elements (or your org/repo).
 2. Framework Preset: Next.js (auto). Root Directory: ./ (repo root). Build: npm run build or pnpm build (Vercel picks pnpm if pnpm-lock.yaml exists).
 3. Environment Variables — add for Production (and Preview if you want preview deploys to hit Supabase):
    NEXT_PUBLIC_SUPABASE_URL = https://YOUR_REF.supabase.co   (project URL only; NO /rest/v1/)

@@ -1,14 +1,16 @@
 import type { Metadata } from 'next'
 import { Geist, Geist_Mono } from 'next/font/google'
 import { Analytics } from '@vercel/analytics/next'
+import { APP_TITLE } from '@/lib/app-title'
 import './globals.css'
 
 const _geist = Geist({ subsets: ["latin"] });
 const _geistMono = Geist_Mono({ subsets: ["latin"] });
 
 export const metadata: Metadata = {
-  title: 'Financial Planner Pro',
-  description: 'Generate comprehensive financial plans for your clients with eight elements of financial control',
+  title: APP_TITLE,
+  description:
+    'Generate comprehensive financial plans for your clients with the eight elements of financial planning.',
   generator: 'v0.app',
   icons: {
     icon: [

@@ -37,6 +37,8 @@ export interface StatusItem {
 export interface IncomeOptimizationData {
   incomeNeeded: number
   incomeSources: LineItem[]
+  /** Monthly spouse/partner income (in addition to line-item sources). */
+  spouseMonthlyIncome: number
   annuityPayoutPercent: number
   // Calculated
   totalIncome: number
@@ -62,7 +64,10 @@ export interface RevenueReplacerData {
 }
 
 export interface AssetBuilderData {
+  /** Primary client / household member (1–10). */
   riskTolerance: number
+  /** Spouse or partner (1–10); meaningful when `ClientPlan.spouseName` is set. */
+  spouseRiskTolerance: number
   assets: LineItem[] // Can be categorized as 'qualified' or 'non-qualified'
   maxLossDollars: number
   excessFees: number
@@ -105,6 +110,7 @@ export interface TaxPlannerData {
 export interface ClientPlan {
   id: string
   clientName: string
+  spouseName: string
   createdAt: string
   updatedAt: string
   incomeOptimization: IncomeOptimizationData
@@ -121,6 +127,7 @@ export interface ClientPlan {
 export const defaultIncomeOptimization: IncomeOptimizationData = {
   incomeNeeded: 0,
   incomeSources: [],
+  spouseMonthlyIncome: 0,
   annuityPayoutPercent: 0.06,
   totalIncome: 0,
   monthlyGap: 0,
@@ -144,6 +151,7 @@ export const defaultRevenueReplacer: RevenueReplacerData = {
 
 export const defaultAssetBuilder: AssetBuilderData = {
   riskTolerance: 3,
+  spouseRiskTolerance: 3,
   assets: [],
   maxLossDollars: 0,
   excessFees: 0,
@@ -181,7 +189,9 @@ export const defaultTaxPlanner: TaxPlannerData = {
 
 // Calculation helpers
 export function calculateIncomeOptimization(data: IncomeOptimizationData): IncomeOptimizationData {
-  const totalIncome = data.incomeSources.reduce((sum, item) => sum + item.amount, 0)
+  const fromSources = data.incomeSources.reduce((sum, item) => sum + item.amount, 0)
+  const spouseIncome = data.spouseMonthlyIncome ?? 0
+  const totalIncome = fromSources + spouseIncome
   const monthlyGap = totalIncome - data.incomeNeeded
   const annualGap = monthlyGap * 12
   const annuityNeeded = data.annuityPayoutPercent > 0 ? annualGap / data.annuityPayoutPercent : 0
@@ -193,6 +203,21 @@ export function calculateIncomeOptimization(data: IncomeOptimizationData): Incom
     annualGap,
     annuityNeeded,
   }
+}
+
+/** Merge DB jsonb with defaults so older rows get `spouseMonthlyIncome` and recalculated fields. */
+export function parseStoredIncomeOptimization(raw: unknown): IncomeOptimizationData {
+  const partial =
+    typeof raw === 'object' && raw !== null ? (raw as Partial<IncomeOptimizationData>) : {}
+  return calculateIncomeOptimization({
+    ...defaultIncomeOptimization,
+    ...partial,
+    incomeSources: partial.incomeSources ?? defaultIncomeOptimization.incomeSources,
+    spouseMonthlyIncome:
+      typeof partial.spouseMonthlyIncome === 'number'
+        ? partial.spouseMonthlyIncome
+        : defaultIncomeOptimization.spouseMonthlyIncome,
+  })
 }
 
 export function calculateRevenueReplacer(data: RevenueReplacerData): RevenueReplacerData {
@@ -224,6 +249,27 @@ export function calculateAssetBuilder(data: AssetBuilderData): AssetBuilderData 
     nonQualifiedAssets,
     totalAssets,
   }
+}
+
+/** Merge DB jsonb with defaults (including `spouseRiskTolerance` for older rows). */
+export function parseStoredAssetBuilder(raw: unknown): AssetBuilderData {
+  const partial =
+    typeof raw === 'object' && raw !== null ? (raw as Partial<AssetBuilderData>) : {}
+  const riskTolerance =
+    typeof partial.riskTolerance === 'number'
+      ? partial.riskTolerance
+      : defaultAssetBuilder.riskTolerance
+  const spouseRiskTolerance =
+    typeof partial.spouseRiskTolerance === 'number'
+      ? partial.spouseRiskTolerance
+      : riskTolerance
+  return calculateAssetBuilder({
+    ...defaultAssetBuilder,
+    ...partial,
+    assets: Array.isArray(partial.assets) ? partial.assets : defaultAssetBuilder.assets,
+    riskTolerance,
+    spouseRiskTolerance,
+  })
 }
 
 export function calculateEmergencyBuilder(

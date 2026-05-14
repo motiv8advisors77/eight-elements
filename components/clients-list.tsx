@@ -1,6 +1,7 @@
 "use client"
 
 import { useState } from "react"
+import { APP_TITLE, APP_TITLE_HEADLINE } from "@/lib/app-title"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Plus, Search, Calendar, Trash2, ArrowRight, Info, LogOut } from "lucide-react"
@@ -159,9 +160,13 @@ function ElementsDetailedGuide() {
 export function ClientsList({ clients, onSelectClient, onCreateClient, onDeleteClient, user, onSignOut }: ClientsListProps) {
   const [searchQuery, setSearchQuery] = useState("")
 
-  const filteredClients = clients.filter(client =>
-    client.clientName.toLowerCase().includes(searchQuery.toLowerCase())
-  )
+  const filteredClients = clients.filter((client) => {
+    const q = searchQuery.toLowerCase()
+    return (
+      client.clientName.toLowerCase().includes(q) ||
+      (client.spouseName || "").toLowerCase().includes(q)
+    )
+  })
 
   const formatCurrency = (value: number) => {
     return new Intl.NumberFormat('en-US', {
@@ -214,8 +219,8 @@ export function ClientsList({ clients, onSelectClient, onCreateClient, onDeleteC
         <div className="max-w-3xl mx-auto text-center">
           <p className="text-xs uppercase tracking-widest text-muted-foreground mb-4">Comprehensive Planning</p>
           <h1 className="text-3xl md:text-4xl font-light text-foreground leading-tight tracking-tight mb-4">
-            Eight Elements of
-            <span className="block font-medium">Financial Control</span>
+            {APP_TITLE_HEADLINE.lead}
+            <span className="block font-medium">{APP_TITLE_HEADLINE.accent}</span>
           </h1>
           <p className="text-muted-foreground text-sm max-w-md mx-auto">
             Generate personalized financial plans with intelligent product recommendations.
@@ -304,6 +309,12 @@ export function ClientsList({ clients, onSelectClient, onCreateClient, onDeleteC
                       <h3 className="font-medium text-foreground group-hover:text-accent transition-colors">
                         {client.clientName}
                       </h3>
+                      {client.spouseName?.trim() ? (
+                        <p className="text-xs text-muted-foreground mt-0.5">
+                          {"& "}
+                          {client.spouseName.trim()}
+                        </p>
+                      ) : null}
                       <p className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                         <Calendar className="size-3" />
                         {new Date(client.updatedAt).toLocaleDateString('en-US', { 
@@ -357,7 +368,7 @@ export function ClientsList({ clients, onSelectClient, onCreateClient, onDeleteC
       <footer className="py-8 px-6 border-t border-border">
         <div className="max-w-6xl mx-auto">
           <p className="text-xs text-muted-foreground text-center">
-            Eight Elements of Financial Control
+            {APP_TITLE}
           </p>
         </div>
       </footer>

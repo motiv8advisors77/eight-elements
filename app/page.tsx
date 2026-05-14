@@ -6,7 +6,12 @@ import { ClientsList } from "@/components/clients-list"
 import { ClientPlanView } from "@/components/client-plan-view"
 import { ClientWizard } from "@/components/client-wizard"
 import { createClient } from "@/lib/supabase/client"
-import { getClientPlans, createClientPlan, updateClientPlan, deleteClientPlan, signOut } from "@/lib/actions"
+import {
+  insertClientPlan,
+  patchClientPlan,
+  queryClientPlans,
+  removeClientPlan,
+} from "@/lib/client-plans-queries"
 import type { ClientPlan } from "@/lib/types"
 
 type ViewMode = 'list' | 'wizard' | 'detail'
@@ -32,7 +37,7 @@ export default function FinancialPlannerApp() {
     
     setUser(user)
     
-    const { data, error } = await getClientPlans()
+    const { data, error } = await queryClientPlans(supabase)
     if (error) {
       console.error("Error loading clients:", error)
     } else if (data) {
@@ -51,7 +56,8 @@ export default function FinancialPlannerApp() {
   }
 
   const handleWizardComplete = async (client: ClientPlan) => {
-    const { data, error } = await createClientPlan(client)
+    const supabase = createClient()
+    const { data, error } = await insertClientPlan(supabase, client)
     if (error) {
       console.error("Error creating client:", error)
       return
@@ -68,7 +74,8 @@ export default function FinancialPlannerApp() {
   }
 
   const handleDeleteClient = async (id: string) => {
-    const { error } = await deleteClientPlan(id)
+    const supabase = createClient()
+    const { error } = await removeClientPlan(supabase, id)
     if (error) {
       console.error("Error deleting client:", error)
       return
@@ -77,7 +84,8 @@ export default function FinancialPlannerApp() {
   }
 
   const handleUpdateClient = async (updatedClient: ClientPlan) => {
-    const { data, error } = await updateClientPlan(updatedClient)
+    const supabase = createClient()
+    const { data, error } = await patchClientPlan(supabase, updatedClient)
     if (error) {
       console.error("Error updating client:", error)
       return
@@ -99,7 +107,8 @@ export default function FinancialPlannerApp() {
   }
 
   const handleSignOut = async () => {
-    await signOut()
+    const supabase = createClient()
+    await supabase.auth.signOut()
     router.push("/auth/login")
   }
 

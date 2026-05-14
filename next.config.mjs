@@ -32,10 +32,18 @@ function parseDotEnv(content) {
 /** Match lib/supabase/normalize-url.ts — base URL must not include /rest/v1/. */
 function normalizeSupabaseUrl(url) {
   if (!url) return ''
-  return String(url)
+  const base = String(url)
     .trim()
     .replace(/\/+$/, '')
     .replace(/\/rest\/v1\/?$/i, '')
+  if (!base) return ''
+  try {
+    const parsed = new URL(base)
+    if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
+    return base
+  } catch {
+    return ''
+  }
 }
 
 let fileEnv = {}
