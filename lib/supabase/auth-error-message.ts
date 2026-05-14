@@ -11,6 +11,22 @@ export function getAuthErrorMessage(error: unknown): string {
         : ''
 
   if (
+    message === 'Invalid login credentials' ||
+    message === 'Invalid email or password'
+  ) {
+    return 'Wrong email or password. Check spelling, or reset the password in Supabase Auth if you forgot it.'
+  }
+  if (
+    message.includes('Invalid value') ||
+    message.includes('Failed to parse URL') ||
+    message.includes('Invalid URL')
+  ) {
+    return (
+      'Supabase URL is invalid for this browser. In .env.local use the Project URL from Supabase (Settings → API): ' +
+      'exactly `https://<ref>.supabase.co` with no `/rest/v1` path. Save the file, delete the `.next` folder, restart `pnpm dev`, and hard-refresh the page.'
+    )
+  }
+  if (
     message === 'Failed to fetch' ||
     message === 'Load failed' ||
     message === 'NetworkError when attempting to fetch resource.'

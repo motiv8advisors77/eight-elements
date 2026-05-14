@@ -29,18 +29,20 @@ function parseDotEnv(content) {
   return env
 }
 
-/** Match lib/supabase/normalize-url.ts — base URL must not include /rest/v1/. */
+/** Match lib/supabase/normalize-url.ts — project origin only (no /rest/v1/ paths). */
 function normalizeSupabaseUrl(url) {
   if (!url) return ''
-  const base = String(url)
-    .trim()
-    .replace(/\/+$/, '')
-    .replace(/\/rest\/v1\/?$/i, '')
-  if (!base) return ''
+  const raw = String(url).trim().replace(/\/+$/, '')
+  if (!raw) return ''
+  const withScheme = /^[a-z][a-z0-9+.-]*:\/\//i.test(raw) ? raw : `https://${raw}`
   try {
-    const parsed = new URL(base)
+    const parsed = new URL(withScheme)
     if (parsed.protocol !== 'http:' && parsed.protocol !== 'https:') return ''
-    return base
+    if (!parsed.hostname) return ''
+    const host = parsed.hostname.toLowerCase()
+    if (host === 'undefined' || host === 'null') return ''
+    if (host === 'your-project.supabase.co' || host === 'xxxx.supabase.co') return ''
+    return parsed.origin
   } catch {
     return ''
   }

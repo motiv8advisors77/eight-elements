@@ -27,9 +27,16 @@ export default function FinancialPlannerApp() {
   // Check authentication and load clients
   const loadData = useCallback(async () => {
     const supabase = createClient()
-    
-    const { data: { user } } = await supabase.auth.getUser()
-    
+
+    // After client-side sign-in, cookies/session can lag one tick behind navigation; retry before sending user back to login.
+    let user = (await supabase.auth.getUser()).data.user
+    if (!user) {
+      for (let attempt = 0; attempt < 6 && !user; attempt++) {
+        await new Promise((r) => setTimeout(r, 80 * (attempt + 1)))
+        user = (await supabase.auth.getUser()).data.user
+      }
+    }
+
     if (!user) {
       router.push("/auth/login")
       return

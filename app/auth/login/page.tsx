@@ -14,7 +14,6 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import Link from 'next/link'
-import { useRouter } from 'next/navigation'
 import { useState } from 'react'
 
 export default function Page() {
@@ -22,7 +21,6 @@ export default function Page() {
   const [password, setPassword] = useState('')
   const [error, setError] = useState<string | null>(null)
   const [isLoading, setIsLoading] = useState(false)
-  const router = useRouter()
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
@@ -31,12 +29,21 @@ export default function Page() {
     setError(null)
 
     try {
-      const { error } = await supabase.auth.signInWithPassword({
-        email,
+      const emailTrimmed = email.trim().toLowerCase()
+      const { data, error } = await supabase.auth.signInWithPassword({
+        email: emailTrimmed,
         password,
       })
       if (error) throw error
-      router.push('/')
+      if (!data.session) {
+        setError(
+          'No active session after sign-in. If email confirmation is required, confirm your email from the link Supabase sent, then try again.',
+        )
+        return
+      }
+      await supabase.auth.getSession()
+      // Full navigation so the next document request includes auth cookies (avoids App Router / middleware race with client-only router.push).
+      window.location.assign('/')
     } catch (error: unknown) {
       setError(getAuthErrorMessage(error))
     } finally {

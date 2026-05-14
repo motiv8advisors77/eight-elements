@@ -40,7 +40,7 @@ export default function Page() {
 
     try {
       const { error } = await supabase.auth.signUp({
-        email,
+        email: email.trim().toLowerCase(),
         password,
         options: {
           emailRedirectTo: getAuthEmailRedirectTo(),
