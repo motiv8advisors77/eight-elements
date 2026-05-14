@@ -29,6 +29,15 @@ function parseDotEnv(content) {
   return env
 }
 
+/** Match lib/supabase/normalize-url.ts — base URL must not include /rest/v1/. */
+function normalizeSupabaseUrl(url) {
+  if (!url) return ''
+  return String(url)
+    .trim()
+    .replace(/\/+$/, '')
+    .replace(/\/rest\/v1\/?$/i, '')
+}
+
 let fileEnv = {}
 const envLocalPath = path.join(__dirname, '.env.local')
 if (fs.existsSync(envLocalPath)) {
@@ -42,10 +51,11 @@ if (fs.existsSync(envLocalPath)) {
 // Second arg: true in development so .env.development.local etc. match `next dev`
 loadEnvConfig(__dirname, process.env.NODE_ENV === 'development')
 
-const supabaseUrl =
+const supabaseUrl = normalizeSupabaseUrl(
   fileEnv.NEXT_PUBLIC_SUPABASE_URL ??
-  process.env.NEXT_PUBLIC_SUPABASE_URL ??
-  ''
+    process.env.NEXT_PUBLIC_SUPABASE_URL ??
+    '',
+)
 const supabaseAnonKey =
   fileEnv.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
   process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY ??
